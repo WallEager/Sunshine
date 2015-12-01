@@ -2,6 +2,7 @@ package com.example.android.sunshine2;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -61,15 +62,34 @@ public class MainActivityFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             updateWeather();//refresh button is used to make internet connection in a backgroung thread and fetch weather information
-              // initiates doInBackground sending the pin
+            // initiates doInBackground sending the pin
             return true;
         }
         if (id == R.id.action_settings) {//settings button is called
-            Intent  intent = new Intent(getActivity(),SettingsActivity.class);
-             this .startActivity(intent);//
+            Intent intent = new Intent(getActivity(), SettingsActivity.class);
+            this.startActivity(intent);//
+            return true;
+        }
+        if (id == R.id.action_map) {
+            openPreferredLocationInMap();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void openPreferredLocationInMap() {
+        SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = sh.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+        /*getString(String key, String defValue)
+        Retrieve a String value from the preferences.*/
+        Uri geoLocation = Uri.parse("geo:0.0?").buildUpon()
+                .appendQueryParameter("q", location)
+                .build();
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+
+        startActivity(intent);
+
     }
 
     @Override
@@ -88,38 +108,37 @@ public class MainActivityFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String forecast = mForecastAdapter.getItem(position);
 
-                Log.d("App",forecast);
-                Intent intent = new Intent(getActivity(),DetailActivity.class).putExtra(Intent.EXTRA_TEXT,forecast);
+                Log.d("App", forecast);
+                Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, forecast);
                 startActivity(intent);
             }
         });
 
 
-
         return view;
     }
 
-    private void updateWeather()
-    {
+    private void updateWeather() {
         FetchWeatherTask weatherTask = new FetchWeatherTask();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = prefs.getString(getString(R.string.pref_location_key),getString(R.string.pref_location_default));
+        String location = prefs.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
         weatherTask.execute(location);
     }
 
     @Override
-    public void onStart()
-    {
+    public void onStart() {
         super.onStart();
         updateWeather();
     }
+
+
 
     class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
         /* The date/time conversion code is going to be moved outside the asynctask later,
          * so for convenience we're breaking it out into its own method now.
          */
-        private String getReadableDateString(long time){
+        private String getReadableDateString(long time) {
             // Because the API returns a unix timestamp (measured in seconds),
             // it must be converted to milliseconds in order to be converted to valid date.
             SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("EEE MMM dd");
@@ -141,7 +160,7 @@ public class MainActivityFragment extends Fragment {
         /**
          * Take the String representing the complete forecast in JSON Format and
          * pull out the data we need to construct the Strings needed for the wireframes.
-         *
+         * <p/>
          * Fortunately parsing is easy:  constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
          */
@@ -178,10 +197,10 @@ public class MainActivityFragment extends Fragment {
 
             String[] resultStrs = new String[numDays];
 
-            SharedPreferences sh=PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String unitType=sh.getString(getString(R.string.pref_units_key),getString(R.string.pref_units_metric));
+            SharedPreferences sh = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String unitType = sh.getString(getString(R.string.pref_units_key), getString(R.string.pref_units_metric));
 
-            for(int i = 0; i < weatherArray.length(); i++) {
+            for (int i = 0; i < weatherArray.length(); i++) {
                 // For now, using the format "Day, description, hi/low"
                 String day;
                 String description;
@@ -195,7 +214,7 @@ public class MainActivityFragment extends Fragment {
                 // "this saturday".
                 long dateTime;
                 // Cheating to convert this to UTC time, which is what we want anyhow
-                dateTime = dayTime.setJulianDay(julianStartDay+i);
+                dateTime = dayTime.setJulianDay(julianStartDay + i);
                 day = getReadableDateString(dateTime);
 
                 // description is in a child array called "weather", which is 1 element long.
@@ -218,6 +237,7 @@ public class MainActivityFragment extends Fragment {
             return resultStrs;
 
         }
+
         @Override
         protected String[] doInBackground(String... params) {
             HttpURLConnection urlConnection = null;
@@ -304,26 +324,21 @@ public class MainActivityFragment extends Fragment {
                     }
                 }
             }
-            try
-            {
-                return getWeatherDataFromJson(forecastJsonStr,numDays);
-            }
-            catch(JSONException e)
-            {
-                Log.e("PlaceHolderFragment",e.getMessage(),e);
+            try {
+                return getWeatherDataFromJson(forecastJsonStr, numDays);
+            } catch (JSONException e) {
+                Log.e("PlaceHolderFragment", e.getMessage(), e);
                 e.printStackTrace();
             }
             return null;
         }
+
         // onPostExecute directly receives the string array data from doInBackground.
         @Override
-        protected void onPostExecute(String[] result)
-        {
-            if(result!=null)
-            {
+        protected void onPostExecute(String[] result) {
+            if (result != null) {
                 mForecastAdapter.clear();
-                for(String dayForecastStr : result)
-                {
+                for (String dayForecastStr : result) {
                     mForecastAdapter.add(dayForecastStr);
                 }
             }
