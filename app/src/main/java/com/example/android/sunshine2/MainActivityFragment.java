@@ -62,6 +62,11 @@ public class MainActivityFragment extends Fragment {
             weatherTask.execute("160101");   // initiates doInBackground sending the pin
             return true;
         }
+        if (id == R.id.action_settings) {//settings button is called
+            Intent  intent = new Intent(getActivity(),SettingsActivity.class);
+             this .startActivity(intent);//
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

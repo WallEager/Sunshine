@@ -50,10 +50,12 @@ public class DetailActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
 
+            if (id == R.id.action_settings) {//settings button is called
+                Intent  intent = new Intent(this,SettingsActivity.class);
+                this .startActivity(intent);// initiates doInBackground sending the pin
+                return true;
+            }
         return super.onOptionsItemSelected(item);
     }
 
